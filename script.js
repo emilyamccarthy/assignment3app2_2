@@ -1,177 +1,61 @@
-var map = L.map('mapid').setView([38.63868,-90.30317], 12);
+    require([
+      "esri/Map",
+      "esri/layers/CSVLayer",
+      "esri/views/MapView",
+      "esri/config",
+      "esri/core/urlUtils",
+      "dojo/domReady!"
+    ], function(
+      Map,
+      CSVLayer,
+      MapView,
+      esriConfig,
+      urlUtils
+    ) {
 
-  // load a tile layer
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	maxZoom: 19,
-	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+      // If CSV files are not on the same domain as your website, a CORS enabled server
+      // or a proxy is required.
+     var url = "https://raw.githubusercontent.com/gbrunner/adv-programming-for-gis-and-rs/master/Web%20Development%20Module/Unit%202%20-%20ArcGIS%20JavaScript%20API/stl_crime_wgs_84.csv";
+     esriConfig.request.corsEnabledServers.push('https://rawgit.com');
 
-function onEachFeature(feature, layer) {
-  if (feature.properties && feature.properties.popupContent) {
-    layer.bindPopup(feature.properties.popupContent);
-  }
-}
+      // Paste the url into a browser's address bar to download and view the attributes
+      // in the CSV file. These attributes include:
+      // * mag - magnitude
+      // * type - earthquake or other event such as nuclear test
+      // * place - location of the event
+      // * time - the time of the event
 
-var geojsonFeature = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "Name": "Sauce on the Side",
-        "popupContent": "<b>Sauce on the Side</b><br>Great calzones and salads"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -90.2565586566925,
-          38.627172226771336
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "Name": "Seoul  Taco",
-        "popupContent": "<b>Seoul Taco</b><br>Korean-mexican fusion, I love the burritos"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -90.24987995624542,
-          38.628341454584714
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "Name": "U-City Grill",
-        "popupContent": "<b>U-City Grill</b><br>Cash only; delicicous beef bulgogi"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -90.30848622322081,
-          38.65663598042729
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "Name": "801 Chophouse",
-        "popupContent": "<b>801 Chophouse</b><br>Elegant steakhouse"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -90.33247590065001,
-          38.64892763595949
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "Name": "Charlie Gitto's",
-        "popupContent": "<b>Charlie Gitto's</b><br>Best creme brulee in STL"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -90.27347803115843,
-          38.61791831050015
-        ]
-      }
-    }
-  ]
-};
+        const template = {
+          title: "Earthquake Info",
+          content: "Magnitude {mag} {type} hit {place} on {time}."
+        };
 
-L.geoJSON(geojsonFeature, {
-  onEachFeature: onEachFeature
-}).addTo(map);
+        const csvLayer = new CSVLayer({
+          url: url,
+          copyright: "USGS Earthquakes",
+          popupTemplate: template
+        });
 
-//var feat = L.geoJSON(geojsonFeature).addTo(map);
+        var symbol = {
+          type: "simple-marker", 
+          color: "green"
+        };
 
-//feat.bindPopup("help").openPopup();
+      csvLayer.renderer = {
+        type: "simple", // autocasts as new SimpleRenderer()
+        symbol: symbol
+      };
 
-var myLines = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            -106.5234375,
-            35.10193405724606
-          ],
-          [
-            -106.41357421875,
-            35.37113502280101
-          ],
-          [
-            -106.0400390625,
-            35.567980458012094
-          ],
-          [
-            -105.79833984375,
-            35.69299463209881
-          ],
-          [
-            -105.6005859375,
-            35.47856499535729
-          ],
-          [
-            -105.40283203124999,
-            35.460669951495305
-          ],
-          [
-            -105.09521484375,
-            35.69299463209881
-          ],
-          [
-            -104.83154296875,
-            35.94243575255426
-          ],
-          [
-            -104.74365234375,
-            36.049098959065645
-          ],
-          [
-            -104.6337890625,
-            36.2265501474709
-          ],
-          [
-            -104.6337890625,
-            36.421282443649496
-          ]
-        ]
-      }
-    }
-  ]
-}
+      var map = new Map({
+        basemap: "gray",
+        layers: [csvLayer]
+      });
 
-var myStyle = {
-    "color": "#ff7800",
-    "weight": 2,
-    "opacity": 0.65
-};
+      var view = new MapView({
+        container: "viewDiv",
+        center: [-90.321, 38.663], 
+        zoom: 11,
+        map: map
+      });
 
-L.geoJSON(myLines, {
-    style: myStyle
-}).addTo(map);
-
-
-
-L.geoJSON(states, {
-    style: function(feature) {
-        switch (feature.properties.party) {
-            case 'Republican': return {color: "#C8C9C7"};
-            case 'Democrat':   return {color: "#003DA5"};
-        }
-    }
-}).addTo(map);
+    });
